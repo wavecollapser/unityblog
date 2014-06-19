@@ -1,0 +1,21 @@
+#!/bin/bash
+#convert articles into mysql data... save in mysql instead.
+tdir=$(pwd)
+outf=out.mysql
+
+#escfunc() { ../scripts/mysqlescape }
+
+cd ../sites || exit 1
+echo "saving into $tdir/$outf..."
+rm "$tdir/$outf" >/dev/null 2>&1
+#no need to escape paranthesis in mysql, uses first and last in each line as enclosures
+#|sed -e 's/(/\\(/g' -e 's/)/\\)/g'
+escfunc() { ../scripts/mysqlescape|sed -r -e $"s/\\\\'/''/g" -e $'s/\\\\"/"/g'; }
+titlereplace() {
+    tr '-' ' '|sed -r -e 's/^(.)/\U\1/'
+}
+
+#echo "use unityblog;" > ../scripts/$outf
+echo "INSERT INTO Articles VALUES" > "$tdir/$outf"
+z=1;while read l;do date=$( stat -c '%x' "$l"|cut -d. -f1); data=$(cat "$l"|escfunc);title=$(echo -n "$l"|escfunc|titlereplace);echo "('$z','$date','$title','"$data"'), " >> "$tdir/$outf";let z+=1;done < .titles
+echo "saved to $outf, check before run!"

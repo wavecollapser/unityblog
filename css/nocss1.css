@@ -1,0 +1,16 @@
+.frame {
+    padding:8px;
+    border:1px solid #999999;
+}
+
+#cont_titlebtn.inline_button
+{
+    position: relative;width: 127.9px; display: inline-block;
+}
+span.button
+{
+    color: #8B0000;
+    font-size: 1.0em;
+    font-weight: bold;
+
+}

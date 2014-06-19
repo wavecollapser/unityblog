@@ -1,0 +1,6 @@
+@import("style.css");
+#rightmenufav
+{
+    position: absolute;
+    margin-top: 600px;
+}

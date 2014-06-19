@@ -1,0 +1,17 @@
+@import url("style.css");
+body {
+    color: black;
+    background-image:url('../img/blog/9.jpg');
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+}
+/* admin top doesn't work if android scales
+ * we need a higher height to teach , and more to the left
+ *  it was centered out of main page width */
+//#topadmin {
+//    z-index:1;position:absolute;
+//    top:25px;left:50%;
+//    margin-left:-100px;
+//    width:200px;
+//    height:40px;
+//}

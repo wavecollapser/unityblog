@@ -1,0 +1,8 @@
+@import url("style.css");
+body {
+    color: black;
+    background-image:url('../upload/small/free2.jpg');
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+}
+

@@ -1,0 +1,8 @@
+@import url("style.css");
+body {
+    color: black;
+    background-image:url('../img/blog/bg1-small.jpg');
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+}
+

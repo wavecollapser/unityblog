@@ -1,0 +1,16 @@
+  Unityblog 2.4-stable (~git)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Minimal no fuzz blog, with a neat minimal design
+
+Features:
+    comments, tagging, admin add/edit/delete, categories etc.
+
+
+HOWTO
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+see Screenshots in screenshot/ if you just want a preview...
+
+To Install blog:
+   # mysql -uroot -p --default-character-set=utf8 unityblog < all.sql

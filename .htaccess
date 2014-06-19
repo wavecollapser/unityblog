@@ -1,0 +1,9 @@
+RewriteEngine On
+#RewriteRule ^sitemap$ ?sitemap [T=application/x-httpd-php,L]
+#RewriteRule ^/\?$ / [T=application/x-httpd-php,L]
+
+#RewriteRule something something.php [L]
+RewriteRule wavecollapser1 index.php [L]
+RewriteRule \?sitemap /index.php?sitemap [T=application/x-httpd-php,L]
+
+Options -indexes

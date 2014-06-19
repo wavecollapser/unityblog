@@ -1,0 +1,99 @@
+A:link { text-decoration: none; color: #8B0000; }
+A:visited { text-decoration: none; color:#8B0000; }
+A:active { text-decoration: none; color: blue; }
+A:hover { text-decoration: none; color: #aadd00; }
+ input, select, textarea {
+         border: 1px solid;
+	 border-color: #000000;
+	 font-family: sans-serif;
+	 color: #000000;
+	 font-size: 11px;
+	 background-color: #ffffff;
+	 }
+A.email2:link { text-decoration: none; color: #cffccf; }
+A.email2:visited { text-decoration: none; color:#ccee00; }
+A.email2:active { text-decoration: none; color: #ccee00; }
+A.email2:hover { text-decoration: none; color: #cffccf; }
+#title
+{
+    color: black;
+}
+body {
+    color: black;
+    background-image:url('bg5.jpg');
+    background-repeat:no-repeat;
+    background-attachment:fixed;
+}
+//background-color: #fcfccc;
+//background-color: #ccee00;
+p.dotted { border-style: dotted; }
+#footer { color: white; text-align:center; }
+#code
+{
+    position: relative;
+    width: 400px;
+    margin: 10 10 10 10;
+    padding: 5 5 5 5;
+    border-style: dashed;
+    background-color: #fcfccc;
+    font-family: sans-serif, arial; font-size: 11px;
+    font-weight: bold;
+    font-color: #000000;
+    background-repeat: no-repeat;
+
+}
+#cont
+{
+position: relative;
+    width: 550px;
+    margin: 0 0 0 0;
+    padding: 5 5 5 5;
+    text-align: center;
+    background-color: #ccee00;
+    font-family: sans-serif, arial; font-size: 11px;
+    font-weight: bold;
+    font-color: #000000;
+    background-repeat: no-repeat;
+}
+table.alerts
+{ text-align: center;
+font-family: Verdana;
+font-weight: normal;
+font-size: 11px;
+color: #404040;
+width: 460px;
+background-color: #fafafa;
+border: 1px #d79900 solid;
+border-collapse: collapse;
+border-spacing: 0px;}
+
+
+.alertHd
+{ border-bottom: 2px solid #d79900;
+background-color: #fff2ba;
+text-align: center;
+font-family: Verdana;
+font-weight: bold;
+font-size: 11px;
+color: #404040;}
+
+
+.alertBod p
+{ text-align: left;
+font-family: Verdana, sans-serif, Arial;
+font-weight: normal;
+font-size: 11px;
+line-height: 12px;
+color: #404040;
+background-color: #fafafa;
+text-indent: -8px;
+margin-left: 10px;
+margin-right: 10px;
+margin-top: 5px;
+margin-bottom: 5px;}  
+#TR.solid { background: #dedcdc; }
+#TR.solid2 { background: #f3f3f3; }
+#TD.* { width: 90%; }
+TR.head { font-weight: underline; background: #f3f3f3; }
+
+

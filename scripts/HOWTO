@@ -1,0 +1,5 @@
+HOW TO IMPORT TO MYSQL IF YOU DONT WANT TO USE A FILE ONLY BLOG:
+
+mysql -uroot -p --default-character-set=utf8 unityblog < allunity.sql
+
+mysql -uroot -p --default-character-set=utf8 unityblog < out.mysql
