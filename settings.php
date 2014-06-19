@@ -2,7 +2,7 @@
 $db_host        = "localhost";
 $db_name        = "unityblog";
 $user           = "unityblog";
-$pass           = "h4TnJxvqw753m6ta";
+$pass           = "rookiemistake";
 
 /* Show category menu to the right for Normal browsers (wont show in android/textmode) ? */
 /* Dont show: less is more */
