@@ -1,4 +1,8 @@
-unityblog
-=========
+  Unityblog 2.4-stable (~git)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Minimal php/mysql/css blog, less is more principle, many admin features, tagging, categorizing
+Minimal no fuzz blog, with a neat minimal design
+
+Features:
+    comments, tagging, admin add/edit/delete, categories etc.
+
