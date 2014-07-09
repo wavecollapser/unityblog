@@ -48,7 +48,7 @@ if (isset($_GET['delComment']))
     deleteComment($delid);
 }
 
-$query="select * from Comments order by ID ASC";
+
 $m = new mysqli($db_host, $user, $pass, $db_name);
 
 if ($m->connect_errno) {
@@ -56,16 +56,55 @@ if ($m->connect_errno) {
     exit();
 }
 mysqli_set_charset($m,"utf8");
+$artCommentStr="";
+/* If enabled, only show comments relevant for current
+ * article or category viewed */
+if ($custompage_comments)
+{
+    $tmp1="";$tmp2="";$tmp3="";
+    if (isset($_GET['ID']))
+        $tmp1=$m->escape_string(strip_tags($_GET['ID']));
+    if (isset($_GET['custPageID']))
+        $tmp2=$m->escape_string(strip_tags($_GET['custPageID']));
+    if (isset($_GET['catName']))
+        $tmp3=$m->escape_string(strip_tags($_GET['catName']));
+    if (isset($_GET['catID']))
+        $tmp3=$m->escape_string(strip_tags($_GET['catID']));
+
+    if (strlen($tmp3))
+        $artCommentStr="WHERE Qrystr_catID='$tmp3'";
+    if (strlen($tmp1) && strlen($tmp3))
+        $artCommentStr="WHERE Qrystr_articleID='$tmp1' AND Qrystr_catID='$tmp3'";
+    if (strlen($tmp2) && strlen($tmp3))
+        $artCommentStr="WHERE Qrystr_custsiteID='$tmp2' AND Qrystr_catID='$tmp3'";
+    if (strlen($tmp1) && strlen($tmp2) && strlen($tmp3))
+        $artCommentStr="WHERE Qrystr_custsiteID='$tmp2' AND Qrystr_articleID='$tmp1' AND Qrystr_catID='$tmp3'";
+    if (strlen($tmp1) && strlen($tmp2))
+        $artCommentStr="WHERE Qrystr_custsiteID='$tmp2' AND Qrystr_articleID='$tmp1'";
+    if (strlen($tmp1) && !strlen($tmp2))
+        $artCommentStr="WHERE Qrystr_articleID='$tmp1'";
+    if (strlen($tmp2) && !strlen($tmp1))
+        $artCommentStr="WHERE Qrystr_custsiteID='$tmp2'";
+}
+
+$query="select * from Comments $artCommentStr ORDER BY ID ASC";
 $res = $m->query($query);
+if (!$res->num_rows)
+{
+echo "No comments received for this page/article.<br><br>";
+
+}
 
 $atext="";
 while($q = mysqli_fetch_array($res)) {
-    $nick = $q['Nick'];
-    $text = ucfirst($q['Comment']);
-    $web  = $q['Website'];
-    $date = $q['Date'];
-    $ID   = $q['ID'];
-    $IP   = $q['IP'];
+    $nick   = $q['Nick'];
+    $text   = ucfirst($q['Comment']);
+    $web    = $q['Website'];
+    $date   = $q['Date'];
+    $cdate  = date_create($date);
+    $date   = date_format($cdate,'Y-m-d');
+    $ID     = $q['ID'];
+    $IP     = $q['IP'];
     $webstr="";
     $text=str_replace("\\","",$text);
     $text=str_replace("\n","<br>",$text);
@@ -76,8 +115,10 @@ while($q = mysqli_fetch_array($res)) {
         $atext="<span class=adminctl>";
         if (strlen($q['IP']))
             $atext.="- " . $q['IP'];
-        $atext.=" - [<a href=?delComment=" . $ID . "#acomment>Delete</a>]";
-        $atext.=" - [<a href=?banIP=" . $IP . "#acomment>Ban</a>]";
+        
+        $tq=clean_querystring(NULL,1,$removeID=0);
+        $atext.=" - [<a href=?" . $tq . "&delComment=" . $ID . "#acomment>Delete</a>]";
+        $atext.=" - [<a href=?" . $tq . "&banIP=" . $IP . "#acomment>Ban</a>]";
         $atext.="</span>";
     }
     else

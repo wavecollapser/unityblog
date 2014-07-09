@@ -30,9 +30,9 @@ function getLog()
         $builtquery.=" AND NOT IP LIKE '" . $w . "'";
 
     $query="SELECT * FROM Log $builtquery ORDER BY DATE DESC LIMIT 250";
-echo "<div id=cont>";
-print_r($query);
-echo "</div><br>";
+    echo "<div id=cont>";
+    print_r($query);
+    echo "</div><br>";
 
     $m = new mysqli($db_host, $user, $pass, $db_name);
 
@@ -89,7 +89,7 @@ function escapestr($str) {
     $escaped = $m->escape_string($str);
     $m->close();
 
-return $escaped;
+    return $escaped;
 
 }
 function saveLog()
@@ -159,7 +159,7 @@ function getPrevID($ID)
     return $previd;
 }
 
-function ButtonGetGroupedCategories()
+function ButtonGetGroupedCategories($nolimit=0)
 {
     include 'settings.php';
 
@@ -179,11 +179,15 @@ function ButtonGetGroupedCategories()
     else
         $tstr=" ";
 
-    $query="SELECT Category,count(*) AS Count FROM Categories " .
-        "$tstr " .
-        "GROUP BY Category " .
-        "ORDER BY Count DESC LIMIT " . $limit;
-
+    // add $tstr and $limit later
+    $query="SELECT f1.Category,f2.ID,count(f1.Category) AS cnt FROM ".
+        "Categories f1 JOIN CategoryID f2 ON f2.Category=f1.Category ".
+        "WHERE f2.Show != 0 GROUP BY Category ORDER BY cnt DESC LIMIT 18";
+    if ($nolimit)
+    $query="SELECT f1.Category,f2.ID,count(f1.Category) AS cnt FROM ".
+        "Categories f1 JOIN CategoryID f2 ON f2.Category=f1.Category ".
+        "GROUP BY Category ORDER BY cnt DESC";
+    
     $m = new mysqli($db_host, $user, $pass, $db_name);
 
     if ($m->connect_errno) {
@@ -198,22 +202,17 @@ function ButtonGetGroupedCategories()
 
     $qstr=$_SERVER['QUERY_STRING'];
     $nqstr=clean_querystring($qstr);
+    //fixme for duplicate getCat , CatID get requests, infinite of them..
+    $nqstr="";
+
+    /* fetch only the ID of the catName 
+     *  for use in the buttons */
     while($q = mysqli_fetch_array($res))
     {
-        $title= $q['Category'];
-        $cnt  = $q['Count'];
-        // GET CAT ID IF IT EXISTS!!
-        $catID="SELECT ID FROM CategoryID " .
-            "WHERE Category='" . $title . "' LIMIT 1";
-        //put catid in a href string too... if it is there
-        $catres  = $m->query($catID);
-        $catid="";
-        if ($catres)
-        {
-            $z = mysqli_fetch_array($catres);
-            $catid=$z['ID'];
-        }
-        //END GET CATID TO QSTR
+        $title = $q['Category'];
+        $cnt   = $q['cnt'];
+        $catid = $q['ID'];
+
         if (isset($nqstr) && strlen($nqstr))
             $targstr="?" . $nqstr . "&getCat&catID=";
         else
@@ -226,6 +225,12 @@ function ButtonGetGroupedCategories()
              $catid . "\"><div id=cont_title_gbutton><center><span class=redgroupedcats>" .
                  $title . "(" . $cnt . ")" . "</span></center></div></a>";
     }
+
+    if (!$nolimit)
+    echo "<a href=\"?sitemap&listAllCategories\">" .
+         "<div id=categoryrightbtn><center><span class=redgroupedcas>" .
+         "View All</span></center></div></a><br>";
+    
 
     $m->close();
 
@@ -286,9 +291,12 @@ function getGroupedCategories($newcolor="")
             $catid=$z['ID'];
         }
         //END GET CATID TO QSTR
-        if (isset($nqstr) && strlen($nqstr))
-            $targstr="?" . $nqstr . "&getCat&catID=";
-        else
+        //FIXME:
+        // THIS FAILS A BIT
+        // IT SHOWS DUPLICATE KEY VALUE PAIRS IN QSTR !!
+        //if (isset($nqstr) && strlen($nqstr))
+        //    $targstr="?" . $nqstr . "&getCat&catID=";
+        //else
             $targstr="?getCat&catID=";
 
         if (strlen($newcolor))
@@ -402,9 +410,35 @@ function addCategory($ID,$category)
 
     return $retcode;
 }
+function delCustPage($ID)
+{
+    include 'settings.php';
+    if (!isset($_SESSION['isadmin'])) admin_fail();
+
+    $retcode=0;
+    $query="DELETE FROM CustomPages where ID='" . 
+        $ID . "' LIMIT 1";
+
+    $m = new mysqli($db_host, $user, $pass, $db_name);
+
+    if ($m->connect_errno) {
+        printf("Connect failed: %s\n", $mysqli->connect_error);
+        exit();
+    }
+
+    mysqli_set_charset($m,"utf8");
+    $res  = $m->query($query);
+
+    if ($res) $retcode=1;
+
+    $m->close();
+
+    return $retcode;
+}
 function delCategory($ID,$category)
 {
     include 'settings.php';
+    if (!isset($_SESSION['isadmin'])) admin_fail();
 
     $retcode=1;
     $query="DELETE FROM Categories where ID='" . 
@@ -573,7 +607,8 @@ function doBackup()
     include 'settings.php';
 
     $retcode=1;
-    $bcktbl="Backup_" . date("YmdHis");
+    $bcktbl  = "Backup_" . date("YmdHis");
+    $bcktbl2 = "Backup_cPages" . date("YmdHis");
     $query = "CREATE TABLE IF NOT EXISTS `" . $bcktbl . "` (".
         "  `ID` bigint(20) NOT NULL AUTO_INCREMENT,".
         "  `Date` datetime NOT NULL,".
@@ -582,9 +617,22 @@ function doBackup()
         "  `LastUpdated` timestamp NULL DEFAULT CURRENT_TIMESTAMP,".
         "  PRIMARY KEY (`ID`)".
         ") ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=46 ;";
+    $query2 = "".
+        "CREATE TABLE IF NOT EXISTS `" . $bcktbl2 . "` (".
+        "  `ID` int(11) NOT NULL AUTO_INCREMENT,".
+        "  `Date` datetime NOT NULL,".
+        "  `Title` varchar(100) NOT NULL,".
+        "  `Text` text NOT NULL,".
+        "  `LastUpdated` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,".
+        "  `Hide` tinyint(1) NOT NULL DEFAULT '1',".
+        "  `HideDate` tinyint(1) NOT NULL DEFAULT '1',".
+        "  PRIMARY KEY (`ID`)".
+        ") ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=42 ;";
 
-    $bck  ="INSERT " . $bcktbl . " " .
-           " SELECT * FROM Articles";
+    $bck   ="INSERT " . $bcktbl . " " .
+             " SELECT * FROM Articles";
+    $bck2  ="INSERT " . $bcktbl2 . " " .
+             " SELECT * FROM CustomPages";
 
     $m = new mysqli($db_host, $user, $pass, $db_name);
 
@@ -596,6 +644,8 @@ function doBackup()
     mysqli_set_charset($m,"utf8");
     $res  = $m->query($query);
     $res2 = $m->query($bck);
+    $res  = $m->query($query2);
+    $res2 = $m->query($bck2);
 
     //if ($res->num_rows)
     if ($res)
@@ -633,6 +683,103 @@ function sql_get_title($ID)
 
     return $retcode;
 }
+
+/* Get title for blog <title></title> tags, helps better
+ * google indexing, as you can specify custom titles for each page */
+function getPageTitle()
+{
+    include 'settings.php';
+
+    $errorStr="404 error, page could not be found";
+
+    $m = new mysqli($db_host, $user, $pass, $db_name);
+
+    if ($m->connect_errno) {
+        printf("Connect failed: %s\n", $mysqli->connect_error);
+        exit();
+    }
+
+    mysqli_set_charset($m,"utf8");
+
+    if (isset($_GET['custPageID']))
+    {
+        $t=$m->escape_string(strip_tags($_GET['custPageID']));
+        $query="SELECT Title FROM CustomPages " .
+               " WHERE ID='" . $t . "' LIMIT 1";
+        $res  = $m->query($query);
+        $q = mysqli_fetch_array($res);
+        $z=$q['Title'];
+
+        $m->close();
+
+        if (strlen($z))
+            return $z;
+        else
+            return $errorStr;
+    }
+    if (isset($_GET['catName']))
+    {
+        $t=$m->escape_string(strip_tags($_GET['catName']));
+        $query="SELECT f2.Description FROM Categories f1 " .
+               " WHERE Category='" . $t . "' JOIN CategoryID f2" .
+               " ON f2.Category=f1.Category LIMIT 1";
+
+        $res  = $m->query($query);
+        $q = mysqli_fetch_array($res);
+        $z=$q['Description'];
+
+        $m->close();
+
+        if (strlen($z))
+            return $z;
+        else
+            return $t;
+
+    }
+    if (isset($_GET['catID']))
+    {
+        $w=$m->escape_string(strip_tags($_GET['catID']));
+        $t=getCatbyID($w);
+        $query="SELECT f2.Description FROM Categories f1 " .
+               " JOIN CategoryID f2 on f2.Category=f1.Category " .
+               " WHERE f1.Category='" . $t . "' LIMIT 1";
+
+        $res  = $m->query($query);
+        $q = mysqli_fetch_array($res);
+        $z=$q['Description'];
+
+        $m->close();
+
+        if (strlen($z))
+            return $z;
+        else
+            return $t;
+
+    }
+    if (isset($_GET['ID']))
+    {
+        $t=$m->escape_string(strip_tags($_GET['ID']));
+        $query="SELECT Title FROM Articles " .
+               " WHERE ID='" . $t . "' LIMIT 1";
+        $res  = $m->query($query);
+        $q = mysqli_fetch_array($res);
+        $z=$q['Title'];
+
+        $m->close();
+
+        if (strlen($z))
+            return $z;
+        else
+            return $errorStr;
+    }
+
+
+    /* no fetched category, custPage or getArticle ID 
+     *  return NULL, don't modify page title */
+
+    return NULL;
+}
+
 /* Get category name by ID */
 function getCatbyID($ID)
 {
@@ -716,8 +863,9 @@ function newCategoryID($category)
     /* Didn't exist in DB, so we have to create it in CategoryID table */
     if (!$retcode)
     {
-        $query="INSERT INTO CategoryID VALUES" . 
-            "(NULL,'" . $cat . "','" . $showCat . "',NOW())";
+        $query="INSERT INTO CategoryID " .
+            "(`ID`,`Category`,`Description`,`Show`,`Created`) VALUES " . 
+            "(NULL,'" . $cat . "',NULL,'" . $showCat . "',NOW())";
         $res  = $m->query($query);
 
         if ($res)
@@ -761,6 +909,150 @@ function getAdminOpts($ID,$artnum,$isadmin,$sitemap=0)
     $out.="</span>";
 
     return $out;
+}
+
+/* return array of custPage data for a given ID */
+function getCustPage($ID)
+{
+    include 'settings.php';
+
+    $retcode=1;
+    $query="SELECT * FROM CustomPages where ID='" . 
+        $ID . "' LIMIT 1";
+
+    $m = new mysqli($db_host, $user, $pass, $db_name);
+
+    if ($m->connect_errno) {
+        printf("Connect failed: %s\n", $mysqli->connect_error);
+        exit();
+    }
+
+    mysqli_set_charset($m,"utf8");
+    $res  = $m->query($query);
+    if (!$res) return NULL;
+
+    $id=0;
+    $k=array();
+    while($q = mysqli_fetch_array($res))
+    {
+        $k['ID']          = $q['ID'];
+        $k['Date']        = $q['Date'];
+        $k['Title']       = $q['Title'];
+        $k['Text']        = $q['Text'];
+        $k['LastUpdated'] = $q['LastUpdated'];
+        $k['Hide']        = $q['Hide'];
+        $k['HideDate']    = $q['HideDate'];
+
+        $id++;
+    }
+
+    $m->close();
+
+    return $k;
+}
+
+/* saveCustPage(NULL,....) to create a new cust page
+ * saveCustPage(ID=xxx,...) to save changed to old page
+ */
+
+function saveCustPage($ID,$date,$title,$text,$hide,$hideDate)
+{
+    include 'settings.php';
+    if (!isset($_SESSION['isadmin'])) admin_fail();
+
+    $retval=1;
+
+    if ($ID != NULL) 
+        $query="UPDATE CustomPages SET Title='" . $title . 
+            "', LastUpdated=NOW(), Text='" . $text .
+            "',Hide='" . $hide . "', hideDate='". $hideDate . "'" . 
+            " WHERE ID='" . $ID . "' LIMIT 1";
+    else
+        $query="INSERT INTO CustomPages SET `ID`=NULL,
+            `Date`=NOW(),`Title`='" . $title . "',
+            `Text`='" . $text .  "',`LastUpdated`=NOW(),
+            `Hide`='" . $hide . "', `HideDate`='". $hideDate . "'";
+
+    $m = new mysqli($db_host, $user, $pass, $db_name);
+
+    if ($m->connect_errno) {
+        printf("Connect failed: %s\n", $mysqli->connect_error);
+        exit();
+    }
+
+    mysqli_set_charset($m,"utf8");
+    $res  = $m->query($query);
+    if (!$res) $retval=0;
+
+    $m->close();
+
+    return $retval;
+}
+
+function getadmCategories()
+{
+    include 'settings.php';
+
+    $retcode=1;
+    //$query="SELECT *,count(*) as Count FROM CategoryID group by Category order by Count DESC";
+    $query="SELECT f2.*,count(f1.Category) AS Count FROM ".
+        "Categories f1 JOIN CategoryID f2 ON f2.Category=f1.Category ".
+        "GROUP BY Category ORDER BY Count DESC";
+
+    $m = new mysqli($db_host, $user, $pass, $db_name);
+
+    if ($m->connect_errno) {
+        printf("Connect failed: %s\n", $mysqli->connect_error);
+        exit();
+    }
+
+    mysqli_set_charset($m,"utf8");
+    $res  = $m->query($query);
+    if (!$res) return NULL;
+
+    $id=0;
+    $k=array();
+
+    $m->close();
+
+    return $res;
+}
+function getCustPages()
+{
+    include 'settings.php';
+
+    $retcode=1;
+    $query="SELECT * FROM CustomPages order by Title DESC";
+
+    $m = new mysqli($db_host, $user, $pass, $db_name);
+
+    if ($m->connect_errno) {
+        printf("Connect failed: %s\n", $mysqli->connect_error);
+        exit();
+    }
+
+    mysqli_set_charset($m,"utf8");
+    $res  = $m->query($query);
+    if (!$res) return NULL;
+
+    $id=0;
+    $k=array();
+    while($q = mysqli_fetch_array($res))
+    {
+        $k[$id]['ID']          = $q['ID'];
+        $k[$id]['Date']        = $q['Date'];
+        $k[$id]['Title']       = $q['Title'];
+        $k[$id]['Text']        = $q['Text'];
+        $k[$id]['LastUpdated'] = $q['LastUpdated'];
+        $k[$id]['Hide']        = $q['Hide'];
+        $k[$id]['HideDate']    = $q['HideDate'];
+
+        $id++;
+    }
+
+    $m->close();
+
+    return $k;
 }
 
 ?>

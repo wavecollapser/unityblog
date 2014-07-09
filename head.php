@@ -1,5 +1,7 @@
 <?php
 
+$customtitle=0;
+
 if (isset($_GET['catName']))
     $extra="- " . strip_tags($_GET['catName']) . " articles";
 else if (isset($_GET['catID']))
@@ -13,6 +15,20 @@ else if (isset($_GET['sitemap']))
 else
     $extra="";
 
+$extra2=$extra;
+$oldextra=$extra;
+
+/* Don't show custom page titles for Sitemap page 
+ * but show for all other pages if enabled in settings.php */
+if ($realpagetitle && !isset($_GET['sitemap']))
+{
+    if (($w=getPageTitle())!=NULL)
+        $extra="- " . $w;
+
+    /* for h3 header on index pages on top of page */
+    $extra2=$oldextra;
+}
+
 ?>
 <head>
 <meta content="width=device-width" name="viewport" />
@@ -23,7 +39,6 @@ else
 <script src="js/jquery-1.11.0.min.js"></script>
 <script src="js/lightbox.min.js"></script>
 <script src="js/blog.js"></script>
-<script src="js/hammer.js"></script>
 
 <title><?php echo $blogtitle;?> <?php echo $extra;?></title>
 

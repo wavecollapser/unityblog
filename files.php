@@ -11,6 +11,11 @@ $links=array(
     "Screenshots" => "../screenshots",
     "Physics"     => "../physics",
     "Comics"      => "../comics",
+    "My budgies"  => "?sitemap&getArticle&ID=52#Art22",
+    "Pictures of me"          => "?custPage&custPageID=44",
+    "Funny childhood/school pics"    => "?custPage&custPageID=42",
+    "About me"    => "?custPage&custPageID=33",
+    "My geekcode" => "?custPage&custPageID=43",
     "Sitemap<br>
     <center><span class=black>
     comments? send me a mail: 

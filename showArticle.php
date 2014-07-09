@@ -178,6 +178,9 @@ else
 $res = $m->query($query);
 if (!$res) die(mysql_error());
 
+//print_r($query);
+//print_r($res);
+
 // category sort menu, only for real web browsers
 // android doesnt have space for a right menu...
 if ($showcategorymenu && !$textmode && !$android &&
@@ -263,8 +266,273 @@ if ($showfeaturedmenu && !$textmode && !$android &&
 <?php
 } // end featured links menu
 
+$otherPage=0;
+
+/* Show custom page for a certain ID */
+if (isset($_GET['custPage']))
+{
+    $otherPage=1;
+    $ID=strip_tags($_GET['custPageID']);
+    $arr = @array();
+    $arr = getCustPage($ID);
+    if ($arr != NULL)
+    {
+        $admStr = "";
+        $text   = $arr['Text'];
+        $text_arr   = explode("\n",$text);
+        $tmptext="";
+        foreach ($text_arr as $w)
+            $tmptext.=   ucfirst($w) . "<br>";
+        $text=$tmptext;
+        $title  = $arr['Title'];
+        $tdate       = ($arr['HideDate']) ? "" : $arr['Date'];
+        $tlastupdate = ($arr['HideDate']) ? "" : $arr['LastUpdated'];
+
+        $thedate="";
+        if (strlen($tdate))
+        {
+            $thedate.="<span class=artdate>";
+            $thedate.="Created: ".$tdate;
+            $thedate.="<br>";
+            $thedate.="Last Update: ".$tlastupdate;
+            $thedate.="</span>";
+        }
+
+        /* Show edit link for admin user */
+        if (isset($_SESSION['isadmin']))
+        {
+            $admStrEdit="<span class=smalladm>" .
+                "[ <a href=?editCustPage&custPageID=" . $ID . ">" .
+                "Edit</a> ]</span>";
+            $admStr="<br><br>" . $admStrEdit;
+            $title.=" " . $admStrEdit;
+        }
+        $date   = $arr['Date'];
+        contentFrameCenter($text=$text . $thedate . $admStr,$title=$title);
+    }
+    else
+        contentFrameCenter(
+            "<b>Error: </b> No such custom page ID " . 
+            " in mysql database", $title="Page error / 404"
+        );
+}
+
+if (isset($_GET['newCustPage']))
+{
+    if (!isset($_SESSION['isadmin'])) admin_fail();
+    $otherPage=1;
+    $title     = "New cust page title here...";
+    $text      = "Cust page text here..";
+    $date      = NULL;
+    $hide      = 1;
+    $hideDate  = 1;
+
+    editSiteForm(
+        $qstr,$ID=NULL,$title,$text,$date,
+        $hide,$hideDate,$newSite=1
+    );
+
+}
+else if (isset($_GET['editCustPage']))
+{
+    if (!isset($_SESSION['isadmin'])) admin_fail();
+    $otherPage=1;
+    $ID=strip_tags($_GET['custPageID']);
+    $arr=@array();
+    $arr       = getCustPage($ID);
+    if ($arr != NULL)
+    {
+        $title     = $arr['Title'];
+        $text      = $arr['Text'];
+        $date      = $arr['Date'];
+        $hide      = $arr['Hide'];
+        $hideDate  = $arr['HideDate'];
+
+        editSiteForm(
+            $qstr,$ID,$title,$text,$date,
+            $hide,$hideDate,$newSite=0
+        );
+    }
+    else
+        contentFrameCenter(
+            "<b>Error: </b> No such custom page ID " . 
+            " in mysql database", $title="Page error / 404"
+        );
+
+
+}
+
+if (isset($_POST['delSite']))
+{
+    $ID=strip_tags($_POST['SiteID']);
+    echo "<div class=alert style=\"width: 520px;\">";
+    if (delCustPage($ID)) 
+        echo "Deleted custom site!";
+    else
+        echo "Error: failed to delete custom site!";
+    echo "</div>";
+}
+
+/* Save changes on Custom page to DB */
+else if (isset($_POST['editSite']))
+{
+    if (isset($_POST['SiteID']) && 
+        isset($_POST['editsite_newtitle']) &&
+        isset($_POST['editsite_newdate']) &&
+        isset($_POST['editsite_newtext'])
+    ) {
+        /* Just escape, but allow html as it is for admin pages! */
+        $ID         = escapestr($_POST['SiteID']);
+        $date       = escapestr($_POST['editsite_newdate']);
+        $title      = escapestr($_POST['editsite_newtitle']);
+        $text       = escapestr($_POST['editsite_newtext']);
+        $hide       = escapestr($_POST['editsite_hide']);
+        $hideDate   = escapestr($_POST['editsite_hideDate']);
+
+        $tmpvar     = escapestr($_POST['newSite']);
+        if ($tmpvar == 1) $ID=NULL;
+
+        saveCustPage($ID,$date,$title,$text,$hide,$hideDate);
+
+        echo "<div class=alert style=\"width: 520px;\">";
+        if ($ID != NULL)
+            echo "Saved changes to custom page ID=" . $ID . " in DB!";
+        else
+            echo "Successfully created new custom page in database!";
+        echo "</div>";
+    } else {
+        echo "<div class=alert>";
+        echo "Error: Saving to custom page ID=" . $ID . " failed!!";
+        echo "</div>";
+    }
+
+}
+
+
+if (isset($_GET['listadmCategories']))
+{
+    if (!isset($_SESSION['isadmin'])) admin_fail();
+    $otherPage=1;
+
+    $arr = getadmCategories();
+    if ($arr != NULL)
+    {
+        $lines=array();
+        $i=0;
+        $lines[$i++]="<center>".
+            "[<a href=?newCustPage>New category</a>]</center>" . 
+            "<br><br>";
+
+        $lines[$i++]="<div id=custPagebar><table class=cPageadmtop><tr>" .
+            "<td class=ID>ID</td><td class=ctitle>Title</td>" .
+            "<td class=description>Description</td>" .
+            "<td class=ID>Show</td>" .
+            "<td class=ID>Count</td><td class=cAdm>&nbsp;</td></tr></table></div>";
+
+    while($q = mysqli_fetch_array($arr))
+    {
+            $ID        = $q['ID'];
+            $title     = $q['Category'];
+            $text      = $q['Description'];
+            $show      = $q['Show'];
+            $count     = $q['Count'];
+            
+            $shorttitle = substr($title,0,25);
+
+            $show = ($show) ? "<input type=checkbox checked>" :
+                 "<input type=checkbox>" ;
+            $hide=($show)? "NO" : "YES";
+            $actls="" .
+                //"<a href=?editCustPage&custPageID=" . 
+                //$ID . ">[Edit]</a> " .
+                //"<a href=?custPage&custPageID=" . $ID . ">[View]</a> [Del]";
+                "";
+
+            $lines[$i++]=
+                "<div id=custPagebar><table class=cPageadm><tr>".
+                "<td class=ID>"   . $ID .
+                "</td><td class=ctitle><input type=text size=16 value=\""  . $shorttitle . "\">" .
+                "</td><td class=description><input type=text size=16 value=\""  . $text . "\">" .
+                "</td><td class=ID>"  . $show .
+                "</td><td class=ID>"  . $count .
+                "</td><td class=cAdm> " . $actls . 
+                "</td></tr></table></div>";
+
+        }
+        $lines[$i++]="<br>Description will show in page title, and help better google indexing!";
+        $lines[$i++]="<br><br>";
+        contentFrameCenterArr($lines,"Categories admin");
+    }
+    else
+    {
+        contentFrameCenter(
+            "<b>Error: </b> No such category ID " . 
+            " in mysql database", $title="Page error / 404"
+        );
+    }
+
+}
+else if (isset($_GET['listCustPages']))
+{
+    if (!isset($_SESSION['isadmin'])) admin_fail();
+    $otherPage=1;
+
+    $arr = getCustPages();
+    if ($arr != NULL)
+    {
+        $lines=array();
+        $i=0;
+        $lines[$i++]="<center>".
+            "[<a href=?newCustPage>New custom page</a>]</center>" . 
+            "<br><br>";
+
+        $lines[$i++]="<div id=custPagebar><table class=cPageadmtop><tr>" .
+            "<td>ID</td><td>Title</td><td>Hide</td>" .
+            "<td>HideDate</td><td>&nbsp;</td></tr></table></div>";
+
+        foreach ($arr as $k=>$v)
+        {
+            $ID        = $arr[$k]['ID'];
+            $title     = $arr[$k]['Title'];
+            $hide      = $arr[$k]['Hide'];
+            $hide=($hide)? "YES" : "NO";
+            $hidedate  = $arr[$k]['HideDate'];
+            $hidedate=($hidedate)? "YES" : "NO";
+            $text  = substr($arr[$k]['Text'],0,15) . "...";
+            $actls="<a href=?editCustPage&custPageID=" . 
+                $ID . ">[Edit]</a> " .
+            "<a href=?custPage&custPageID=" . $ID . ">[View]</a>";
+
+            $lines[$i++]=
+                "<div id=custPagebar><table class=cPageadm><tr>".
+                "<td>"   . $ID .
+                "</td><td>"  . substr($title,0,9) . ".." .
+                "</td><td>"  . $hide .
+                "</td><td>"  . $hidedate .
+                "</td><td> " . $actls . 
+                "</td></tr></table></div>";
+
+        }
+        $lines[$i++]="<br><br>";
+        contentFrameCenterArr($lines,"Custom Pages Administrator");
+    }
+    else
+    {
+        contentFrameCenter(
+            "<b>Error: </b> No such custom page ID " . 
+            " in mysql database", $title="Page error / 404"
+        );
+    }
+
+}
+
+
+
 $prevID=0;
 while($createNew || ($q = mysqli_fetch_array($res))) {
+
+    if ($otherPage) break;
+
     if ($createNew)
     {
         $ID       = NULL;
@@ -297,8 +565,8 @@ while($createNew || ($q = mysqli_fetch_array($res))) {
     if ($sitemap) $toggle=1;
     $artnum = ($num>1)? $prevID: $num;
 
-    /* We don't want to show previous long article 
-    /* if untoggled, when uncollapsing divs  */
+    /* We don't want to show previous long article
+     * if untoggled, when uncollapsing divs  */
     if (!$toggleprior)
         $artnum=$num;
 
@@ -356,7 +624,7 @@ while($createNew || ($q = mysqli_fetch_array($res))) {
         if (! $sitemap || ($viewArticle && ($num == $IDInput) && isset($_GET['getArticle'])))
         {
 
-            /* spacer between articles */
+            /* Spacer between articles */
             if ($ENABLE_SPACER) {
             if ($num>1)
             {
@@ -372,7 +640,7 @@ while($createNew || ($q = mysqli_fetch_array($res))) {
             echo "<tr>";
             echo "<td valign=top class=padleft>";
 
-            /* title of article */
+            /* Title of article */
             if ($showdate)
                 echo "<b>" . ucfirst($title) . "</b><br><font size=-1><i>$dateStr</i></font><br>";
             else
@@ -410,37 +678,11 @@ while($createNew || ($q = mysqli_fetch_array($res))) {
             /* Create a new Article */
             if ($createNew)
             {
-                     $nqstr=clean_querystring($qstr);
-                     echo "<form method=post action=\"?" . "\">";
-                     echo "<input type=text value=\"$title\" size=50 onClick=\"this.value='';\" name=newtitle maxlength=90>";
-                     echo "<input type=text value=\"$realdate\" size=11 name=newdate maxlength=90>";
-                     echo "<textarea name=newtext cols=50 rows=20 onClick=\"this.value='';\">";
-                     echo "$text";
-                     echo "</textarea>";
-                     echo "<input type=submit name=doCancel value=Cancel>";
-                     echo "<input type=submit name=createArticle value=Save>";
-                     echo "<form action=\"?". clean_querystring($qstr)."\" metod=post>";
-                     echo "<input type=submit value=\"Go Back\"></form>";
-                     require_once 'categoryForm.php';
-                     echo "</form>";
+                newArticleForm($qstr,$title,$text="New article text here....",$realdate);
             } 
             if ($editArticle)
             {
-                 $nqstr=clean_querystring($qstr);
-                 echo "<form method=post action=\"?" . $nqstr . "&ID=" . $ID . "\">";
-                 echo "<input type=text value=\"$title\" size=50 name=newtitle maxlength=90 tabindex=1>";
-                 echo "<input type=text value=\"$realdate\"  size=11 name=newdate maxlength=90 tabindex=2>";
-                 echo "<textarea name=newtext cols=50 rows=20 tabindex=3>";
-                 echo "$text";
-                 echo "</textarea>";
-                 echo "<input type=hidden name=ArticleID value=" . $ID . ">";
-                ?>
-                <input type=submit name=editArticle value=Save tabindex=4>
-                <input type=submit name=delArticle value=Delete>
-                <input type=submit value="Go Back">
-                <?php
-                require_once 'categoryForm.php';
-                echo "</form>";
+                editArticleForm($qstr,$ID,$title,$text,$realdate);
             } 
 
             echo "</td></tr></table></div>\n";

@@ -1,5 +1,4 @@
 <?php
-$outf="comments.txt";
 $textmode=0;
 $android=0;
 
@@ -27,7 +26,6 @@ if (isset($_GET['sitemap']))
     $sitemap=1;
 else
     $sitemap=0;
-$ADDCOMMENT= (isset($_POST['nick']) && isset($_POST['comment'])) ? 1:0;
 //$CSSFILE = ($sitemap) ? "style-nocss.css" : "style.css" ;
 $CSSFILE = ($sitemap) ? "style.css" : "style.css" ;
 
@@ -77,7 +75,9 @@ function DEBUG() {
     for ($i=1;$i<=10;$i++)
         print_r($arr);
 }
+/* if removing a nokey var, remove the & after it!! */
 function remove_querystring_nokey_var($url, $key) { 
+    $url=str_replace($key . "&","",$url);
     $url=str_replace("&" . $key,"",$url);
     $url=str_replace($key,"",$url);
     return $url; 
@@ -89,7 +89,7 @@ function remove_querystring_var($url, $key) {
     $url = substr($url, 0, -1); 
     return $url; 
 }
-function clean_querystring($url=NULL,$keep_sitemap=1)
+function clean_querystring($url=NULL,$keep_sitemap=1,$removeID=1)
 {
     if ($url == NULL) $url= $_SERVER['QUERY_STRING'];
     $url=remove_querystring_var($url, "sortBy");
@@ -106,8 +106,19 @@ function clean_querystring($url=NULL,$keep_sitemap=1)
     $url=remove_querystring_nokey_var($url, "doBackup");
     $url=remove_querystring_var($url, "delComment");
     $url=remove_querystring_var($url, "banIP");
-    $url=remove_querystring_var($url, "ID");
-    $url=remove_querystring_var($url, "num");
+    if ($removeID)
+    {
+        $url=remove_querystring_var($url, "ID");
+        $url=remove_querystring_var($url, "num");
+    }
+    //important to remove full vars before vars that contain that text.
+    //so do this here..: custpageID before custPage
+    //else ID=... is left!!
+    if ($removeID) 
+    {
+        $url=remove_querystring_var($url, "custPageID");
+        $url=remove_querystring_nokey_var($url, "custPage");
+    }
     $url=remove_querystring_nokey_var($url, "admshow");
     $url=remove_querystring_nokey_var($url,"listCategories");
     $url=remove_querystring_nokey_var($url,"listFiles");
@@ -116,10 +127,14 @@ function clean_querystring($url=NULL,$keep_sitemap=1)
     //$url=remove_querystring_nokey_var($url,"getCat");
     //$url=remove_querystring_var($url, "catName");
     //$url=remove_querystring_var($url, "catID");
-    if (!isset($_GET['ID'])) 
-        $url=remove_querystring_nokey_var($url,"getArticle");
-    if (!isset($_GET['edit'])) 
-        $url=remove_querystring_nokey_var($url,"getArticle");
+    $url=remove_querystring_nokey_var($url,"listCustPages");
+    if ($removeID)
+    {
+        if (!isset($_GET['ID'])) 
+            $url=remove_querystring_nokey_var($url,"getArticle");
+        if (!isset($_GET['edit'])) 
+            $url=remove_querystring_nokey_var($url,"getArticle");
+    }
     $url=str_replace("?&","?",$url);
     $url=str_replace("&?","&",$url);
     if (substr($url,0,1) == "&")
@@ -189,6 +204,124 @@ function makeSubcatLink($url,$title,$extra="",$center=0)
     echo "</div></a>";
 
 }
+
+// fix IE<7 broken inline divs, with tables instead
+function iefix($str)
+{
+    echo "<!--[if lte IE 7]>". $str . "<![endif]-->";
+
+}
+function newArticleForm($qstr,$title,$text,$realdate)
+{
+     $nqstr=clean_querystring($qstr);
+     echo "<form method=post action=\"?" . "\">";
+     echo "<input type=text value=\"$title\" size=50 onClick=\"this.value='';\" name=newtitle maxlength=90>";
+     echo "<input type=text value=\"$realdate\" size=11 name=newdate maxlength=90>";
+     echo "<textarea name=newtext cols=50 rows=20 onClick=\"this.value='';\">";
+     echo "$text";
+     echo "</textarea>";
+     echo "<input type=submit name=doCancel value=Cancel>";
+     echo "<input type=submit name=createArticle value=Save>";
+     echo "<input type=submit value=\"Go Back\"></form>";
+     echo "</form>";
+     echo "<form action=\"?". clean_querystring($qstr)."\" metod=post>";
+     require_once 'categoryForm.php';
+     echo "</form>";
+
+}
+function editArticleForm($qstr,$ID,$title,$text,$realdate)
+{
+     $nqstr=clean_querystring($qstr);
+     echo "<form method=post action=\"?" . $nqstr . "&ID=" . $ID . "\">";
+     echo "<input type=text value=\"$title\" size=50 name=newtitle maxlength=90 tabindex=1>";
+     echo "<input type=text value=\"$realdate\"  size=11 name=newdate maxlength=90 tabindex=2>";
+     echo "<textarea name=newtext cols=50 rows=20 tabindex=3>";
+     echo "$text";
+     echo "</textarea>";
+     echo "<input type=hidden name=ArticleID value=" . $ID . ">";
+     echo "<input type=submit name=editArticle value=Save tabindex=4>";
+     echo "<input type=submit name=delArticle value=Delete>";
+     echo "<input type=submit value=\"Go Back\">";
+     require_once 'categoryForm.php';
+     echo "</form>";
+}
+function editSiteForm($qstr,$ID,$title,$text,$date,$hide=1,$hideDate=1,$newSite=0)
+{
+     $nqstr=clean_querystring($qstr);
+     $center=array();
+     $tv1=($hide)? " checked" : "";
+     $tv2=($hideDate)? " checked" : "";
+     $i=0;
+     $center[$i++]= "<form method=post action=\"?listCustPages\">";
+     $center[$i++]= "<input type=text value=\"$title\" size=50 name=editsite_newtitle maxlength=90 tabindex=1>";
+
+     /* only show Date field in edit form if we want to show it to the user */
+     if ($date != NULL)
+         $center[$i++]= "<input type=text value=\"$date\"  size=11 name=editsite_newdate maxlength=90 tabindex=2>";
+     else
+         $center[$i++]= "<input type=hidden value=\"$date\" name=editsite_newdate>";
+
+     $center[$i++]= "<textarea name=editsite_newtext cols=50 rows=20 tabindex=3>";
+     $center[$i++]= "$text";
+     $center[$i++]= "</textarea>";
+     $center[$i++]= "<br>";
+     $center[$i++]= "Hide: <input type=checkbox name=editsite_hide value=" . $hide . $tv1 . "> ";
+     $center[$i++]= "HideDate: <input type=checkbox name=editsite_hideDate value=" . $hideDate . $tv2 . "><br>";
+     $center[$i++]= "<input type=hidden name=editSite value=1>";
+     $center[$i++]= "<input type=hidden name=newSite value=" . $newSite . ">";
+     $center[$i++]= "<input type=hidden name=SiteID value=" . $ID . ">";
+     $center[$i++]= "<input type=submit name=editSite value=Save tabindex=4>";
+     if (!$newSite)
+         $center[$i++]= "<input type=submit name=delSite value=Delete>";
+     $center[$i++]= "<input type=submit value=\"Go Back\">";
+     $center[$i++]= "</form>";
+
+     contentFrameCenterArr($center);
+
+
+}
+
+/* show a cont div with contents, for custom pages i.e. */
+function contentFrame($title,$text,$extra="")
+{
+    echo "<div id=cont>";
+    echo "<table class=cont_inner bgcolor=white><tr>\n";
+    echo "<td class=padleft><b>" . ucfirst($title) . "</b>" .
+        $extra . "</td>";
+    echo "<td class=padright>";
+    echo $text;
+    echo "</td></tr></table>";
+    echo "</div>";
+}
+function contentFrameCenterArr($arr,$title="")
+{
+    echo "<div id=cont class=centerframe>";
+    if ($title!="")
+        echo "<center><h3>" . $title . "</h3></center>";
+    echo "<table class=cont_inner bgcolor=white><tr>\n";
+    echo "<td class=custPage>";
+    foreach ($arr as $text)
+    {
+        echo $text;
+    } 
+    echo "</td></tr></table>";
+    echo "</div>";
+}
+function contentFrameCenter($text,$title="")
+{
+    echo "<div id=cont class=centerframe>";
+    if ($title!="")
+        echo "<center><h3>" . $title . "</h3></center>";
+    echo "<table class=cont_inner bgcolor=white><tr>\n";
+    echo "<td class=custPage>" .
+         ucfirst($text);
+    echo "</td></tr></table>";
+    echo "</div>";
+}
+
+if (isset($_GET['maxnum']))
+    $MAXNUM=strip_tags($_GET['maxnum']);
+
 if (isset($_GET['nocss']))
     $CSSFILE="nocss1.css";
 ?>

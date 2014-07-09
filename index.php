@@ -1,20 +1,48 @@
 <html>
 <?php
+//  DEVELOPER MODE; KILL ALL OTHER CONNECTIONS
+//if (!($_SERVER['REMOTE_ADDR'] == "81.161.188.225")) die();
+
 /*
 *  Unityblog - (c) 2014 Michael Ole Olsen <gnu@gmx.net>
 *  minimal no fuzz blog
 *  GPL v3.0
 * 
-*  SEE 'LICENSE' FOR THE FULL GPLv3 LICENSE or www.gnu.org
-*  IF YOU MODIFY THIS PROGRAM YOU MUST INCLUDE THE SOURCE
-*  WITH YOUR RELEASES
+* FIXME:
+* CATEGORY COMMENTS.. insert categoryid in comments table
+*
+*SEEMS WE DONT GET THE RIGHT ID IN LINKS FOR PREV A NAME ARTICLE!!!!
+* since it doesnt support javascript, the prev a id we send is wrong!!
+*
+* when pressing FILES in index.php main site, show a toggle ^  thing, then press again to untoggle menu
+* 
+* IMPORTANT FIXME(RELEASE CRITICAL):
+* center bug on uncollapsed divs bottom of index.php
+* // FIXME: catID instead of catName ,save traffic , dbspace etc, more professional - no logging
+* in IE5.0+
+* contents includes linux,programming,gaming,electronics,system administration,other random stuff
+*
+* EASY FIX:
+* remove table stuff in files.php.... should be css!!
+*
+* 
+*  TODO:
+*  ajax/json expand each title from sites/ 
+*     to not use much bandwidth!!!
+* 
+*     AJAX load sitemap title on click!!!! FIXME would be really nice
+*     just display last 3-5 blog entries, then load those titles you click on
+* 
+*     and sort by tags too!
 * 
 */
 
+//print_r($_GET);
+
 session_start();
 
-include 'func.php';
 include 'settings.php';
+include 'func.php';
 include 'editArticle.php';
 include 'session.php';
 include 'head.php';
@@ -33,71 +61,8 @@ if (isset($_GET['doBackup']))
     echo "</div>";
 }
 
-if ($ADDCOMMENT && strstr($_POST['comment'],"http")) {
-    echo "<div class=alert-error>";
-    echo "Error:<br>";
-    echo "Submit comment failed.<br>";
-    echo "HTML and urls are not allowed in your posts.";
-    echo "</div>";
-/* Only show warn if we are not fetching category names, as they can have ' ' in them */
-} else if (strstr($_SERVER['QUERY_STRING'],"%") && !isset($_GET['catName'])) {
-    echo "<div class=alert-error>";
-    echo "Error:<br>";
-    echo "Your browser is outdated/incompatible<br>";
-    echo "Please upgrade your browser, it uses ";
-    echo "url encoding where it shouldn't, use Firefox or Internet explorer!";
-    echo "<br><br>";
-    echo "The site may still work in some places, use at your own risk..";
-    echo "</div>";
-} else if ($ADDCOMMENT) {
-    $m = new mysqli($db_host, $user, $pass, $db_name);
 
-    if ($m->connect_errno) {
-        printf("Connect failed: %s\n", $mysqli->connect_error);
-        exit();
-    }
-    mysqli_set_charset($m,"utf8");
-
-    $nick="";
-    $web="";
-    $comment="";
-
-    if (isset($_POST['nick']))
-        $nick=$_POST['nick'];
-    if (isset($_POST['comment']))
-        $comment=$_POST['comment'];
-    if (isset($_POST['web']))
-        $web=$_POST['web'];
-    if (strlen($nick) > 50) die(); //we dont like spammers...
-    if (strlen($comment) > 1000) die();
-
-    if (strlen($nick) >1 && strlen($comment)>1) {
-        $nick=escapeshellcmd(strip_tags($nick));
-        $comment=escapeshellcmd(strip_tags($comment));
-        $web=escapeshellcmd(strip_tags($web));
-        $date=date('Y-m-d h:m');
-        $ip=$_SERVER['REMOTE_ADDR'];
-
-        $query="INSERT INTO Comments VALUES (NULL,'$nick','$date','$web','$ip','$comment')";
-        $res = $m->query($query);
-
-        if ($res) {
-            echo "<div class=alert>";
-            echo "Your comment has been submitted, thanks.";
-            echo "</div>";
-        }
-
-        $m->close();
-    } else {
-        echo "<div class=alert-error>";
-        echo "Error:<br>";
-        echo "Submit comment failed.<br>";
-        echo "Please enter nick and comment, too short, try again..";
-        echo "</div>";
-    }
-
-}
-
+include 'saveComment.php';
 
 
 ?>
@@ -122,10 +87,14 @@ if ($ADDCOMMENT && strstr($_POST['comment'],"http")) {
 </form>
 <?php } else { ?>
 <span class=red>[<font color=black> Admin options </font>]</span><br>
-<a href="?createArticle=1">New article</a>
+<a href="?createArticle">New article</a>
+ - <a href="?listCustPages">Custom Pages</a>
+ - <a href="?listadmCategories">Categories</a>
+<!--
  - Edit Article
  - Delete Article
  - Edit Categories
+-->
  - <a href="?admshow">Referers</a>
  - Banlist
  - <a href="?doBackup">Do Backup</a>
@@ -146,7 +115,7 @@ if (strlen($extra) < 2)
 <div id=contcont>
 
 <div id=title>
-<h3><a href="/"><span class=title><?php echo $blogurl; ?></span></a> <span class=title><?php echo $extra; ?></span></h3>
+<h3><a href="/"><span class=title><?php echo $blogurl; ?></span></a> <span class=title><?php echo $bloghead . " " .$extra2; ?></span></h3>
 <div id=shadow-text><?php echo $subtitle;?></div>
 </div>
 <br>
@@ -154,12 +123,18 @@ if (strlen($extra) < 2)
 <?php
 if (!$textmode)
 {
+
+    iefix("<table><tr><td>");
     makeTopbutton("?","Main page","emptyStr");
     if (!strlen($_SERVER['QUERY_STRING'])) 
         $fendstr="";
     else
         $fendstr="&";
+
+    iefix("</td><td>");
     makeTopbutton("?listFiles" . $fendstr . clean_querystring() . $fendstr,"Files","listFiles"); 
+
+    iefix("</td><td>");
 
     /* no need to show this button for Categories button page */
     if (!isset($_GET['listCategories']))
@@ -176,7 +151,9 @@ if (!$textmode)
     else
             makeTopbutton("","&nbsp;");
 
+    iefix("</td><td>");
     makeTopbutton("?sitemap&listCategories","Categories","listCategories");
+    iefix("</tr></table>");
 }
 else
 {
@@ -190,6 +167,8 @@ else
 
 if (isset($_GET['listCategories']))
     ButtonGetGroupedCategories();
+if (isset($_GET['listAllCategories']))
+    ButtonGetGroupedCategories($nolimit=1);
 if (isset($_GET['listFiles']))
     include 'files.php';
 ?>

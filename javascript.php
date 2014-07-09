@@ -33,6 +33,7 @@ if (isset($_GET['nocss']))
 /* problems if we edit or delete , the javascript adds last row #Artnum and goes there afterwards */
 $nofuzz=1;
 if (isset($_GET['edit']) || isset($_GET['delete'])) $nofuzz=0;
+if (isset($_GET['delComment'])) $nofuzz=0;
 
 if ($gotnum && $nofuzz && strlen($tnum)>0)
 {

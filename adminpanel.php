@@ -1,9 +1,14 @@
 <?php
+/* Left admin panel of article
+ * Add the admin features you want here..
+ * */
+
+/* Build the query string */
+$nqstr=clean_querystring($qstr);
+
 if ($isadmin)
             {
                 echo "<font size=1px>";
-                // build the query string
-                $nqstr=clean_querystring($qstr);
 
                 echo "[<a href=\"?" . $nqstr . "&getArticle&ID=" . $ID . "&edit="      . $ID . "#Art" . $ID . "\">Edit</a>]<br>";
                 echo "[<a href=\"?" . $nqstr . "&ID=" . $ID . "&disable="   . $ID . "#Art" . $ID . "\">Disable</a>]<br>";
@@ -19,5 +24,9 @@ if ($isadmin)
                 echo "</font>";
             }
 
+                echo "<font size=1px>";
+                echo "<br>";
+                echo "[<a href=\"?" . $nqstr . "&getArticle&ID=" . $ID . "#Art" . $ID . "\">Share link</a>]<br>";
+                echo "</font>";
 
 ?>
