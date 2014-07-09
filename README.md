@@ -1,4 +1,4 @@
-  Unityblog 2.4-stable (~git)
+  Unityblog 2.8-stable (~git)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Minimal no fuzz blog, with a neat minimal design
