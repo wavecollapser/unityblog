@@ -2,7 +2,7 @@
 $db_host        = "localhost";
 $db_name        = "unityblog";
 $user           = "unityblog";
-$pass           = "your pc here :-)";
+$pass           = "your pass here :-)";
 
 
 /* Useful for google, page title will be
@@ -45,8 +45,6 @@ $MAXNUM=27;
 
 /* IPs not to show in admin referer log, you can empty this array if you want */
 $hideips=array(
-    "81.161.190.59",
-    "81.161.188.225",
     "180.76.6.%", // spiders all of these ips below
     "180.76.5.%", 
     "5.255.253.%",
