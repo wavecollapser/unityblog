@@ -57,6 +57,9 @@ span.light {
     font-weight: bold;
     color: silver;
 }
+span.bold {
+    font-weight: bold;
+}
 span.grey {
     font-weight: bold;
     color: grey;
@@ -206,13 +209,13 @@ body {
      border: 1px solid;
 	 border-color: #aaaaaa;
 }
-table tr:last-child td:first-child {
+table.bottom tr:last-child td:first-child {
     -moz-border-radius-bottomleft:10px;
     -webkit-border-bottom-left-radius:10px;
     border-bottom-left-radius:10px
 }
 
-table tr:last-child td:last-child {
+table.bottom tr:last-child td:last-child {
     -moz-border-radius-bottomright:10px;
     -webkit-border-bottom-right-radius:10px;
     border-bottom-right-radius:10px
@@ -272,6 +275,18 @@ p.dotted { border-style: dotted; }
     color: white;
     background-color: #8B0000;
 }
+
+#chead
+{
+    background-color: #ccee00;
+    text-align: center;
+    margin: 10 10 0 10;
+    padding: 5 5 5 5;
+    font-family: sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: #000000;
+}
 #code
 {
     margin: 0 10 0 10;
@@ -283,22 +298,9 @@ p.dotted { border-style: dotted; }
     font-weight: bold;
     font-color: #000000;
     background-repeat: no-repeat;
-    /* experimental mio , maybe use other color */
-    background-color: white;
-    box-shadow: 0px 5px 5px 0px #888888;
+    border: 1px silver solid;
+}
 
-}
-#chead
-{
-    box-shadow: 0px 5px 5px 0px #888888;
-    margin: 10 10 0 10;
-    padding: 5 5 5 5;
-    font-family: sans-serif;
-    font-size: 14px;
-    font-weight: bold;
-    color: #ffffff;
-    background-color: red;
-}
 table.alerts
 { text-align: center;
 font-family: Verdana;
@@ -620,3 +622,93 @@ table.admlog th
     text-align: left;
     background-color: white;
 }
+#cont.centerframe
+{
+
+    padding: 5px 5px 5px 5px;
+    margin: 5px 5px 5px 5px;
+}
+td.custPage
+{
+    width: 550px; 
+    padding: 10px 10px 10px 10px;
+}
+span.small
+{
+    font-size: 0.8em;
+    font-weight:bold;
+    color: silver;
+}
+/* title bar of cust page menus for admin */
+#custPagebar
+{
+    padding: 5 5 5 5;
+    font-family: sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+    background-color: #ccee00;
+}
+table.cPageadmtop td
+{
+    width: 100px;
+    padding: 5 5 5 5;
+    font-family: sans-serif;
+    font-size: 14px;
+    font-weight: bold;
+    color: blue;
+    background-color: yellow;
+}
+span.smalladm
+{
+    font-size: 0.7em;
+    font-weight:bold;
+    color: silver;
+}
+
+table.cPageadm td
+{
+
+    width: 100px;
+}
+span.artdate
+{
+    color: grey;
+    font-size: 0.8em;
+    font-style: italic;
+
+}
+/* right category button bottom, view all categories */
+#categoryrightbtn
+{
+    position:absolute; 
+    box-shadow: 5px 5px 5px #888888;
+    border: 1px solid;
+	border-color: #aaaaaa;
+    margin: 0 0 0 0;
+    padding: 5 5 5 5;
+    background-color:white;
+    font-family: sans-serif, arial; font-size: 11px;
+    font-weight: bold;
+    font-color: #000000;
+    width: 150px; 
+    right:428px;
+    -moz-border-radius-bottomleft:10px;
+    -webkit-border-bottom-left-radius:10px;
+    border-bottom-left-radius:10px
+    -moz-border-radius-bottomright:10px;
+    -webkit-border-bottom-right-radius:10px;
+    border-bottom-right-radius:10px
+}
+#categoryrightbtn:hover
+{
+    background-color: #efef0f;
+}
+
+table td.ID { width: 30px; }
+table td.ctitle { width: 240px; }
+table td.cAdm { width: 65px; }
+table td.description { width: 230px; }
+
+span.ptag { color:green; }
+span.php { color:purple; }
