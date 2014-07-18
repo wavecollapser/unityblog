@@ -12,5 +12,20 @@ HOWTO
 
 see Screenshots in screenshot/ if you just want a preview...
 
-To Install blog:
-   # mysql -uroot -p --default-character-set=utf8 unityblog < all.sql
+To Install blog, run as root:
+   mysql -u root -p
+   create database unityblog
+   grant all permissions on unityblog.* to 'unityblog'@'localhost' identified by 'yourpass';
+   flush privileges;
+   exit
+
+   mysql -uroot -p --default-character-set=utf8 unityblog < scripts/allunity.sql
+
+
+---------------------------
+Admin default user/pw
+---------------------------
+admin/admin for logging into the blog as admin in top of page, you must change this manually in sql for now!
+
+the admin menu is hidden on top of page, move your mouse up to top center of page of the blog
+then log in as admin/admin
